@@ -36,6 +36,15 @@ dependencies:
   # Google Fonts
   google_fonts: ^4.0.3
 
+  # Form Validation
+  validators: ^3.0.0
+
+  # Animations
+  flutter_staggered_animations: ^1.1.1
+
+  # Toasts
+  overlay_support: ^2.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

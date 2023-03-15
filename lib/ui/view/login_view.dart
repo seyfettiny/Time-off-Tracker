@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -8,6 +7,8 @@ import 'package:timeofftracker/ui/widgets/custom_button.dart';
 import 'package:timeofftracker/ui/widgets/custom_textfield.dart';
 import 'package:timeofftracker/ui/widgets/google_signin_button.dart';
 import 'package:timeofftracker/viewmodel/loginview_viewmodel.dart';
+import 'package:validators/validators.dart';
+import 'package:timeofftracker/app/extensions/toast_ext.dart';
 
 import 'home_view.dart';
 
@@ -32,52 +33,77 @@ class LoginView extends HookConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 // Logo and title
-                SizedBox.square(
-                  dimension: MediaQuery.of(context).size.width * 0.4,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Image.asset(
-                        'assets/images/logo_icon.png',
-                        scale: 3,
+                Flexible(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 48.0),
+                    child: SizedBox.square(
+                      dimension: MediaQuery.of(context).size.width * 0.4,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/logo_icon.png',
+                            scale: 3,
+                          ),
+                          Spacer(),
+                          Image.asset(
+                            'assets/images/logo_pepteam.png',
+                            scale: 3,
+                          ),
+                          Spacer(),
+                          const Text(
+                            'İzin Portalı',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          )
+                        ],
                       ),
-                      Image.asset(
-                        'assets/images/logo_pepteam.png',
-                        scale: 3,
-                      ),
-                      const Text(
-                        'İzin Portalı',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      )
-                    ],
+                    ),
                   ),
                 ),
                 // Login form
-                SingleChildScrollView(
+                Expanded(
+                  flex: 2,
                   child: Form(
                     key: _formKey,
                     child: Container(
-                      height: 400,
-                      margin: const EdgeInsets.symmetric(vertical: 44),
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           CustomTextField(
                             title: 'Email',
                             hintText: 'Email girin',
                             controller: emailController,
+                            validator: (value) {
+                              if (isNull(value)) {
+                                return 'Email boş bırakılamaz';
+                              } else if (!isEmail(value!)) {
+                                return 'Email formatı yanlış';
+                              }
+                              return null;
+                            },
                           ),
                           CustomTextField(
                             title: 'Şifre',
                             hintText: '••••••••',
                             obscureText: true,
                             controller: passwordController,
+                            validator: (value) {
+                              if (isNull(value)) {
+                                return 'Şifre boş bırakılamaz';
+                              } else if (!isLength(value!, 8)) {
+                                return 'Şifre en az 8 karakter olmalı';
+                              }
+                              return null;
+                            },
                           ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 24.0),
+                            padding: const EdgeInsets.symmetric(vertical: 12.0),
                             child: Align(
                               alignment: Alignment.centerRight,
                               child: Text(
@@ -99,14 +125,16 @@ class LoginView extends HookConsumerWidget {
                               title: 'Giriş Yap',
                               isLoading: loginViewViewModel.isLoading,
                               onPressed: () {
-                                loginViewViewModel
-                                    .signInWithEmail(
-                                  emailController.text,
-                                  passwordController.text,
-                                )
-                                    .then((value) {
-                                  context.go(HomeView.routeName);
-                                });
+                                if (_formKey.currentState!.validate()) {
+                                  loginViewViewModel
+                                      .signInWithEmail(
+                                    emailController.text,
+                                    passwordController.text,
+                                  )
+                                      .then((value) {
+                                    context.go(HomeView.routeName);
+                                  });
+                                }
                               },
                             ),
                           ),

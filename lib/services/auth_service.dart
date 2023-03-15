@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:timeofftracker/app/extensions/toast_ext.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) {
   return AuthService();
@@ -22,9 +23,11 @@ class AuthService {
         password: password,
       );
       return userCredential.user;
-    } on FirebaseAuthException catch (e) {
-      debugPrint('Failed to sign in with email and password: $e');
-      return null;
+    } on FirebaseAuthException catch (error, stackTrace) {
+      debugPrint(
+          'Failed to sign in with email and password: $error $stackTrace');
+      error.message.toString().showErrorToast();
+      throw Exception('Failed to sign in with email and password');
     }
   }
 
@@ -37,9 +40,11 @@ class AuthService {
         password: password!,
       );
       return result;
-    } on FirebaseAuthException catch (e) {
-      debugPrint(e.message);
-      throw Exception(e.message);
+    } on FirebaseAuthException catch (error, stackTrace) {
+      debugPrint(
+          'Failed to sign in with email and password: $error $stackTrace');
+      error.message.toString().showErrorToast();
+      throw Exception('Failed to sign up with email and password');
     }
   }
 
@@ -58,9 +63,11 @@ class AuthService {
           await _firebaseAuth.signInWithCredential(credential);
 
       return userCredential.user;
-    } on FirebaseAuthException catch (e) {
-      debugPrint('Failed to sign in with Google: $e');
-      return null;
+    } on FirebaseAuthException catch (error, stackTrace) {
+      debugPrint(
+          'Failed to sign in with email and password: $error $stackTrace');
+      error.message.toString().showErrorToast();
+      throw Exception('Failed to sign in with Google');
     }
   }
 
