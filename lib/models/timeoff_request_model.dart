@@ -1,22 +1,24 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:timeofftracker/app/enums/timeoff_status.dart';
 import 'package:timeofftracker/app/enums/timeoff_type.dart';
 
-part 'timeoff_request_model.freezed.dart';
+class TimeOffRequestModel {
+  DateTime startDate;
+  DateTime endDate;
+  DateTime requestedAt;
+  int numberOfDays;
+  String userId;
+  TimeOffType timeOffType;
+  TimeOffStatus timeOffStatus;
+  String? reason;
 
-@freezed
-class TimeOffRequestModel with _$TimeOffRequestModel {
-  const factory TimeOffRequestModel({
-    required DateTime startDate,
-    required DateTime endDate,
-    required DateTime requestedAt,
-    required int numberOfDays,
-    required String userId,
-    required TimeOffType timeOffType,
-    required TimeOffStatus timeOffStatus,
-    String? reason,
-  }) = _TimeOffRequestModel;
-
-  factory TimeOffRequestModel.fromJson(Map<String, dynamic> json) =>
-      _$TimeOffRequestModelFromJson(json);
+  TimeOffRequestModel({
+    required this.startDate,
+    required this.endDate,
+    required this.requestedAt,
+    required this.numberOfDays,
+    required this.userId,
+    required this.timeOffType,
+    required this.timeOffStatus,
+    this.reason,
+  });
 }
