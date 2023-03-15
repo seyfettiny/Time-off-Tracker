@@ -1,0 +1,6 @@
+{
+  "helloWorld": "Merhaba Dünya",
+  "@helloWorld": {
+    "description": "Merhaba Dünya mesajı"
+  }
+}
