@@ -7,6 +7,7 @@ import 'package:timeofftracker/ui/view/home_view.dart';
 import 'package:timeofftracker/ui/view/login_view.dart';
 import 'package:timeofftracker/ui/view/signup_view.dart';
 import 'package:timeofftracker/ui/view/splash_view.dart';
+import 'package:timeofftracker/ui/view/timeoff_request_view.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -41,6 +42,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => CupertinoPage(
           key: state.pageKey,
           child: const SignupView(),
+        ),
+      ),
+      GoRoute(
+        path: TimeOffRequestView.routeName,
+        pageBuilder: (context, state) => CupertinoPage(
+          key: state.pageKey,
+          child: const TimeOffRequestView(),
         ),
       ),
     ],
