@@ -66,7 +66,7 @@ class LoginView extends HookConsumerWidget {
                 ),
                 // Login form
                 Expanded(
-                  flex: 2,
+                  flex: 1,
                   child: Form(
                     key: _formKey,
                     child: Container(
