@@ -29,23 +29,6 @@ class LoginViewVM extends StateNotifier<bool> {
     }
   }
 
-  Future<UserCredential> signUpWithEmail(
-      String name, String email, String password) async {
-    try {
-      state = true;
-      final authService = _ref.read(authServiceProvider);
-      final userCredential = await authService.signUpWithEmail(
-          name: name, email: email, password: password);
-      if (userCredential != null) {
-        return userCredential;
-      } else {
-        throw Exception('Failed to sign up with email and password');
-      }
-    } finally {
-      state = false;
-    }
-  }
-
   Future<User> signInWithGoogle() async {
     try {
       state = true;
@@ -54,7 +37,7 @@ class LoginViewVM extends StateNotifier<bool> {
       if (user != null) {
         return user;
       } else {
-        throw Exception('Failed to sign in with email and password');
+        throw Exception('Failed to sign in with Google');
       }
     } finally {
       state = false;
