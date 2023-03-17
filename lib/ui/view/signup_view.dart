@@ -6,7 +6,7 @@ import 'package:timeofftracker/ui/view/home_view.dart';
 import 'package:timeofftracker/ui/widgets/custom_button.dart';
 import 'package:timeofftracker/ui/widgets/custom_textfield.dart';
 import 'package:timeofftracker/ui/widgets/google_signin_button.dart';
-import 'package:timeofftracker/viewmodel/signup_viewmodel.dart';
+import 'package:timeofftracker/viewmodel/signupview_viewmodel.dart';
 import 'package:validators/validators.dart';
 
 class SignupView extends HookConsumerWidget {
@@ -54,7 +54,8 @@ class SignupView extends HookConsumerWidget {
                   validator: (value) {
                     if (value!.isEmpty) {
                       return 'Lütfen adınızı girin';
-                    } else if (!RegExp(r"^[a-zA-Z\s\'-]+$").hasMatch(value)) {
+                    } else if (!RegExp(r"^[a-zA-ZğüşıöçĞÜŞİÖÇ\s\'-]+$")
+                        .hasMatch(value)) {
                       return 'Lütfen geçerli bir ad girin';
                     }
                     return null;
