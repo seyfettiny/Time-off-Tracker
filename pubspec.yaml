@@ -23,6 +23,7 @@ dependencies:
 
   # Immutable data classes generator
   freezed_annotation: ^2.2.0
+  json_annotation: ^4.8.0
 
   # Google Sign-In SDK
   google_sign_in: ^6.0.2
@@ -33,16 +34,13 @@ dependencies:
   # Splash screen
   flutter_native_splash: ^2.2.19
 
-  # Google Fonts
-  google_fonts: ^4.0.3
-
   # Form Validation
   validators: ^3.0.0
 
-  # Animations
+  # UI
   flutter_staggered_animations: ^1.1.1
-
-  # Toasts
+  dotted_border: ^2.0.0+3
+  google_fonts: ^4.0.3
   overlay_support: ^2.1.0
 
 dev_dependencies:
@@ -57,9 +55,10 @@ dev_dependencies:
   build_runner: ^2.3.3
   riverpod_generator: ^2.1.4
   freezed: ^2.3.2
+  json_serializable: ^6.6.1
   source_gen: ^1.1.0
 
-  # Internationalization
+  # Localization
   intl: ^0.17.0
   flutter_localizations:
     sdk: flutter
