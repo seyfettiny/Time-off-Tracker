@@ -45,6 +45,7 @@ app.*.map.json
 
 # Firebase related
 google-services.json
+firebase_options.dart
 
 # Code generation related
 *.freezed.dart
