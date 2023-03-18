@@ -1,5 +1,5 @@
 enum TimeOffStatus {
-  Pending,
-  Approved,
-  Rejected,
+  pending,
+  approved,
+  rejected,
 }

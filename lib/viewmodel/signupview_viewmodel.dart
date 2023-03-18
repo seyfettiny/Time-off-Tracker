@@ -27,12 +27,8 @@ class SignupViewVM extends StateNotifier<bool> {
         email: email,
         password: password,
       );
-
-      if (userCredential != null) {
-        return userCredential;
-      } else {
-        throw Exception('Failed to sign up with email and password');
-      }
+      return userCredential;
+      
     } finally {
       state = false;
     }

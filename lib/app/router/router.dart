@@ -13,7 +13,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: SplashView.routeName,
     errorBuilder: (context, state) {
-      print(state.error);
+      debugPrint(state.error.toString());
       return const ErrorView();
     },
     routes: [

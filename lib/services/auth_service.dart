@@ -30,6 +30,7 @@ class AuthService {
       );
       return userCredential.user;
     } on FirebaseAuthException catch (error, stackTrace) {
+      // TODO: Handle error message translation
       debugPrint(
           'Failed to sign in with email and password: $error $stackTrace');
       error.message.toString().showErrorToast();
@@ -56,7 +57,7 @@ class AuthService {
       //TODO: How to decide if the user is manager or not?
       firestoreService.createUser(
         result.user!.uid,
-        UserType.Employee,
+        UserType.employee,
         21,
       );
 

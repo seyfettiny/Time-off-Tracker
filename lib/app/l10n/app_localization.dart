@@ -7,7 +7,7 @@ final localeProvider = StateNotifierProvider<LocaleNotifier, Locale>((ref) {
   TODO: settingsRef = ref.watch(settingsProvider);
   TODO: return LocaleNotifier(Locale(settingsRef.locale), ref);
   */
-  return LocaleNotifier(Locale('en'), ref);
+  return LocaleNotifier(const Locale('en'), ref);
 });
 
 class LocaleNotifier extends StateNotifier<Locale> {

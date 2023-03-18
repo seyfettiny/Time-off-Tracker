@@ -1,4 +1,4 @@
 enum UserType {
-  Manager,
-  Employee,
+  manager,
+  employee,
 }

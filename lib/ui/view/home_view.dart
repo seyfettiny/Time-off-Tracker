@@ -57,7 +57,7 @@ class HomeView extends ConsumerWidget {
                   // Requests section
                   ElevatedButton(
                     onPressed: () async {},
-                    child: Text('data'),
+                    child: const Text('data'),
                   ),
                   timeOffRequestList.when(
                     data: (data) {
@@ -66,10 +66,10 @@ class HomeView extends ConsumerWidget {
                     },
                     error: (error, stackTrace) {
                       print(error.toString() + stackTrace.toString());
-                      return Text('error');
+                      return const Text('error');
                     },
                     loading: () {
-                      return Text('loading');
+                      return const Text('loading');
                     },
                   ),
                   Container(
@@ -254,9 +254,9 @@ class HomeView extends ConsumerWidget {
                       showModalBottomSheet(
                         context: context,
                         builder: (context) {
-                          return Container(
+                          return const SizedBox(
                             height: 475,
-                            child: const Center(
+                            child: Center(
                               child: Text('Talep Detayı'),
                             ),
                           );

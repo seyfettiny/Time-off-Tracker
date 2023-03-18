@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class CustomTextField extends StatelessWidget {
   final String hintText;
   final String title;
-  final BoxConstraints constraints;
-  final TextEditingController controller;
-  final validator;
   final bool obscureText;
+  final BoxConstraints constraints;
+  final FormFieldValidator validator;
+  final TextEditingController controller;
   const CustomTextField({
     super.key,
     required this.title,

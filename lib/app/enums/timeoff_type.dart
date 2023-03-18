@@ -1,5 +1,5 @@
 enum TimeOffType {
-  Paid,
-  Unpaid,
-  Annual,
+  paid,
+  unpaid,
+  annual,
 }
