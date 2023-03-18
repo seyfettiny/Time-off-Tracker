@@ -23,6 +23,7 @@ class LoginView extends HookConsumerWidget {
     final emailController = useTextEditingController(text: 'testest@te.te');
     final passwordController = useTextEditingController(text: 'testtest');
     final loginViewViewModel = ref.watch(loginViewVMProvider.notifier);
+    var isLoading = ref.watch(loginViewVMProvider);
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus!.unfocus(),
       child: Scaffold(

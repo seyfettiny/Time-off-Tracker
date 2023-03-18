@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class CustomButton extends StatelessWidget {
+class CustomButton extends StatefulWidget {
   final VoidCallback onPressed;
   final bool isLoading;
   final String title;
@@ -11,6 +11,11 @@ class CustomButton extends StatelessWidget {
     required this.title,
   });
 
+  @override
+  State<CustomButton> createState() => _CustomButtonState();
+}
+
+class _CustomButtonState extends State<CustomButton> {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
@@ -23,12 +28,17 @@ class CustomButton extends StatelessWidget {
           ),
         ),
       ),
-      onPressed: onPressed,
-      child: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
+      onPressed: widget.onPressed,
+      child: widget.isLoading
+          ? Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+              ),
             )
-          : Text(title),
+          : Text(widget.title),
     );
   }
 }
