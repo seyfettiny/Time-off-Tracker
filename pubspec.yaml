@@ -1,12 +1,12 @@
 name: timeofftracker
 description: A new Flutter project.
 
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=2.19.4 <3.0.0'
+  sdk: ">=2.19.4 <3.0.0"
 
 dependencies:
   flutter:
@@ -43,6 +43,11 @@ dependencies:
   google_fonts: ^4.0.3
   overlay_support: ^2.1.0
 
+  # Localization
+  intl: ^0.17.0
+  flutter_localizations:
+    sdk: flutter
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -50,6 +55,7 @@ dev_dependencies:
   # Lints for code quality analysis
   flutter_lints: ^2.0.0
   riverpod_lint: ^1.1.6
+  custom_lint: ^0.3.2
 
   # Code generation
   build_runner: ^2.3.3
@@ -58,19 +64,13 @@ dev_dependencies:
   json_serializable: ^6.6.1
   source_gen: ^1.1.0
 
-  # Localization
-  intl: ^0.17.0
-  flutter_localizations:
-    sdk: flutter
-
-
 flutter:
   uses-material-design: true
   generate: true
 
   assets:
     - assets/images/
-    
+
 flutter_native_splash:
   color: "#F6F6F6"
   image: assets/images/logo_icon.png
