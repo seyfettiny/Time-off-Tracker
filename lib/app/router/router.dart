@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timeofftracker/ui/view/error_view.dart';
 import 'package:timeofftracker/ui/view/home_view.dart';
 import 'package:timeofftracker/ui/view/login_view.dart';
+import 'package:timeofftracker/ui/view/result_view.dart';
 import 'package:timeofftracker/ui/view/signup_view.dart';
 import 'package:timeofftracker/ui/view/splash_view.dart';
 import 'package:timeofftracker/ui/view/timeoff_request_view.dart';
@@ -31,7 +32,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: HomeView.routeName,
-        builder: (context, state) => const HomeView(),
+        builder: (context, state) => HomeView(),
       ),
       GoRoute(
         path: LoginView.routeName,
@@ -49,6 +50,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => CupertinoPage(
           key: state.pageKey,
           child: const TimeOffRequestView(),
+        ),
+      ),
+      GoRoute(
+        path: ResultView.routeName,
+        pageBuilder: (context, state) => CupertinoPage(
+          key: state.pageKey,
+          child: const ResultView(),
         ),
       ),
     ],
