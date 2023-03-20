@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timeofftracker/app/enums/user_type.dart';
 import 'package:timeofftracker/models/timeoff_request_model.dart';
+import 'package:timeofftracker/models/user_model.dart';
 
 final firestoreServiceProvider = Provider<FireStoreService>((ref) {
   return FireStoreService();
@@ -15,12 +16,13 @@ class FireStoreService {
   final CollectionReference _timeOffCollectionReference =
       FirebaseFirestore.instance.collection('TimeOffRequests');
 
-  Future<void> createUser(
-      String uid, UserType userType, int timeOffBalance) async {
-    await _usersCollectionReference.doc(uid).set({
-      'userType': userType.name.toString(),
-      'timeOffBalance': timeOffBalance,
-      'timeOffRequests': [],
+  Future<void> createUser(UserModel userModel) async {
+    await _usersCollectionReference
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .set({
+      'userType': userModel.userType.name.toString(),
+      'timeOffBalance': userModel.timeOffBalance,
+      'timeOffRequests': userModel.timeOffRequestList,
     });
   }
 
@@ -37,7 +39,6 @@ class FireStoreService {
   Future<void> createTimeOffRequest(
       TimeOffRequestModel timeOffRequestModel) async {
     await _timeOffCollectionReference.add({
-      'uid': FirebaseAuth.instance.currentUser!.uid,
       'startDate': timeOffRequestModel.startDate,
       'endDate': timeOffRequestModel.endDate,
       'requestedAt': timeOffRequestModel.requestedAt,
@@ -45,7 +46,12 @@ class FireStoreService {
       'userId': timeOffRequestModel.userId,
       'timeOffStatus': timeOffRequestModel.timeOffStatus.name,
       'timeOffType': timeOffRequestModel.timeOffType.name,
-      //'numberOfDays': timeOffRequestModel.numberOfDays,
+    });
+    //TODO: fix this
+    await _usersCollectionReference
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .update({
+      'timeOffRequests': timeOffRequestModel,
     });
   }
 

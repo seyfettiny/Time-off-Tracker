@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timeofftracker/app/enums/user_type.dart';
 import 'package:timeofftracker/app/extensions/toast_ext.dart';
+import 'package:timeofftracker/models/user_model.dart';
 import 'package:timeofftracker/services/firestore_service.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) {
@@ -55,11 +56,11 @@ class AuthService {
       final firestoreService = _ref.read(firestoreServiceProvider);
 
       //TODO: How to decide if the user is manager or not?
-      firestoreService.createUser(
-        result.user!.uid,
-        UserType.employee,
-        21,
-      );
+      firestoreService.createUser(const UserModel(
+        userType: UserType.employee,
+        timeOffBalance: 24,
+        timeOffRequestList: [], 
+      ));
 
       return result;
     } on FirebaseAuthException catch (error, stackTrace) {
