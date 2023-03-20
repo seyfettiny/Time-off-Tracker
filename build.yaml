@@ -1,6 +1,10 @@
 targets:
   $default:
     builders:
+      riverpod_generator:riverpod_generator:
+        options:
+          build_extensions:
+            "lib/viewmodel/{{}}.dart": "lib/app/generated/{{}}.g.dart"
       freezed:freezed:
         options:
           build_extensions:
@@ -9,3 +13,4 @@ targets:
         options:
           build_extensions:
             "^lib/models/{{}}.dart": "lib/app/generated/{{}}.g.dart"
+            "^lib/viewmodel/{{}}.dart": "lib/app/generated/{{}}.g.dart"
