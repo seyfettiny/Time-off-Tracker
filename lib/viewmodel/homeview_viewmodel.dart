@@ -6,12 +6,11 @@ import 'package:timeofftracker/models/user_model.dart';
 import 'package:timeofftracker/services/firestore_service.dart';
 
 final homeViewVMProvider =
-    StateNotifierProvider<HomeViewVM, List<TimeOffRequestModel>>(
-        (ref) {
+    StateNotifierProvider<HomeViewVM, List<TimeOffRequestModel>>((ref) {
   return HomeViewVM(ref);
 });
 
-final timeOffRequestListProvider =
+final timeOffRequestListByCurrentUserProvider =
     StreamProvider<List<TimeOffRequestModel>>((ref) async* {
   final vmRef = ref.watch(homeViewVMProvider.notifier);
 
@@ -20,10 +19,25 @@ final timeOffRequestListProvider =
   }
 });
 
-final userProvider = FutureProvider<UserModel>((ref) async {
+final allTimeOffRequestListProvider =
+    FutureProvider<List<TimeOffRequestModel>>((ref) async {
+  final vmRef = ref.watch(homeViewVMProvider.notifier);
+  final timeOffRequestList = await vmRef.getAllTimeOffRequests();
+  return timeOffRequestList;
+});
+
+final currentUserProvider = FutureProvider<UserModel>((ref) async {
   final vmRef = ref.watch(homeViewVMProvider.notifier);
   final user = await vmRef.getUserById(FirebaseAuth.instance.currentUser!.uid);
   return UserModel.fromJson(user.data() as Map<String, dynamic>);
+});
+
+final allUsersProvider = FutureProvider<List<UserModel>>((ref) async {
+  final vmRef = ref.watch(homeViewVMProvider.notifier);
+  final users = await vmRef.getAllUsers();
+  return users
+      .map((e) => UserModel.fromJson(e.data() as Map<String, dynamic>))
+      .toList();
 });
 
 class HomeViewVM extends StateNotifier<List<TimeOffRequestModel>> {
@@ -37,6 +51,12 @@ class HomeViewVM extends StateNotifier<List<TimeOffRequestModel>> {
     return state = querySnapshot.map(parseResult).toList();
   }
 
+  Future<List<QueryDocumentSnapshot>> getAllUsers() async {
+    final fireStoreService = _ref.read(firestoreServiceProvider);
+    final querySnapshot = await fireStoreService.getAllUsers();
+    return querySnapshot;
+  }
+
   Stream<List<TimeOffRequestModel>> getTimeOffRequestsById() async* {
     final fireStoreService = _ref.read(firestoreServiceProvider);
     final stream = fireStoreService
@@ -47,8 +67,14 @@ class HomeViewVM extends StateNotifier<List<TimeOffRequestModel>> {
     });
   }
 
+  Future<void> cancelTimeOffRequest(String id) async {
+    final fireStoreService = _ref.read(firestoreServiceProvider);
+    await fireStoreService.cancelTimeOffRequest(id);
+  }
+
   TimeOffRequestModel parseResult(QueryDocumentSnapshot querySnapshot) {
     Map<String, dynamic> data = querySnapshot.data() as Map<String, dynamic>;
+    data['id'] = querySnapshot.id;
     data['startDate'] = data['startDate'].toString();
     data['endDate'] = data['endDate'].toString();
     data['requestedAt'] = data['requestedAt'].toString();
