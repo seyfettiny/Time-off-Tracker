@@ -1,79 +1,34 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:rive/rive.dart';
 import 'package:timeofftracker/app/enums/timeoff_status.dart';
+import 'package:timeofftracker/app/enums/user_type.dart';
+import 'package:timeofftracker/app/util/date_time_formatter.dart';
 import 'package:timeofftracker/models/timeoff_request_model.dart';
+import 'package:timeofftracker/models/user_model.dart';
+import 'package:timeofftracker/services/firestore_service.dart';
+import 'package:timeofftracker/ui/view/error_view.dart';
+import 'package:timeofftracker/ui/widgets/custom_chip.dart';
+import 'package:timeofftracker/ui/widgets/custom_button.dart';
+import 'package:timeofftracker/viewmodel/homeview_viewmodel.dart';
 
-class TimeOffRequestTile extends StatelessWidget {
+class TimeOffRequestTile extends ConsumerWidget {
+  final UserModel user;
   final TimeOffRequestModel timeoffRequest;
   const TimeOffRequestTile({
+    required this.user,
     required this.timeoffRequest,
     super.key,
   });
 
-  String formatDateTime(DateTime dateTime) {
-    String formattedDateTime;
-    DateTime now = DateTime.now();
-    DateTime today = DateTime(now.year, now.month, now.day);
-    DateTime yesterday = today.subtract(const Duration(days: 1));
-
-    if (dateTime.isAfter(today)) {
-      formattedDateTime = 'Today ${DateFormat('HH:mm').format(dateTime)}';
-    } else if (dateTime.isAfter(yesterday)) {
-      formattedDateTime = 'Yesterday ${DateFormat('HH:mm').format(dateTime)}';
-    } else {
-      formattedDateTime = DateFormat('d MMM, y, HH:mm').format(dateTime);
-    }
-
-    return formattedDateTime;
-  }
-
-  int calculateWorkDays(DateTime startDate, DateTime endDate) {
-    int workDays = 0;
-    DateTime date = startDate;
-
-    while (date.isBefore(endDate) || date == endDate) {
-      if (date.weekday != DateTime.saturday &&
-          date.weekday != DateTime.sunday) {
-        workDays++;
-      }
-      date = date.add(const Duration(days: 1));
-    }
-
-    return workDays;
-  }
-
-  String formatRequestDates(
-      DateTime startDate, DateTime endDate, int workDays) {
-    String formattedDates;
-
-    String startDateString = DateFormat('dd.MM.yyyy').format(startDate);
-    String endDateString = DateFormat('dd.MM.yyyy').format(endDate);
-
-    if (workDays == 1) {
-      formattedDates = '$startDateString - $endDateString (1 work day)';
-    } else {
-      formattedDates =
-          '$startDateString - $endDateString ($workDays work days)';
-    }
-
-    return formattedDates;
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dateTimeFormatter = ref.read(dateTimeFormatterProvider);
     return GestureDetector(
       onTap: () {
-        showModalBottomSheet(
-          context: context,
-          builder: (context) {
-            return const SizedBox(
-              height: 475,
-              child: Center(
-                child: Text('Talep Detayı'),
-              ),
-            );
-          },
-        );
+        requestModalBottomSheet(context, ref, user);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -97,7 +52,8 @@ class TimeOffRequestTile extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  formatDateTime(DateTime.parse(timeoffRequest.requestedAt)),
+                  dateTimeFormatter.formatDateTime(
+                      DateTime.parse(timeoffRequest.requestedAt)),
                   style: TextStyle(
                     fontSize: 11,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -107,10 +63,10 @@ class TimeOffRequestTile extends StatelessWidget {
               ],
             ),
             Text(
-              formatRequestDates(
+              dateTimeFormatter.formatRequestDates(
                 DateTime.parse(timeoffRequest.startDate),
                 DateTime.parse(timeoffRequest.endDate),
-                calculateWorkDays(
+                dateTimeFormatter.calculateWorkDays(
                   DateTime.parse(timeoffRequest.startDate),
                   DateTime.parse(timeoffRequest.endDate),
                 ),
@@ -119,72 +75,308 @@ class TimeOffRequestTile extends StatelessWidget {
                 color: Theme.of(context).colorScheme.surface,
               ),
             ),
-            if (timeoffRequest.timeOffStatus == TimeOffStatus.pending)
-              const PendingChip(),
-            if (timeoffRequest.timeOffStatus == TimeOffStatus.approved)
-              const ApprovedChip(),
-            if (timeoffRequest.timeOffStatus == TimeOffStatus.rejected)
-              const RejectedChip(),
+            _buildChipType(ref, timeoffRequest.timeOffStatus, user),
           ],
         ),
       ),
     );
   }
-}
 
-class PendingChip extends StatelessWidget {
-  const PendingChip({
-    super.key,
-  });
+  Widget _buildChipType(
+      WidgetRef ref, TimeOffStatus timeOffStatus, UserModel user) {
+    if (user.userType == UserType.employee) {
+      switch (timeOffStatus) {
+        case TimeOffStatus.pending:
+          return const CustomChip.pending();
+        case TimeOffStatus.rejected:
+          return const CustomChip.rejected();
+        case TimeOffStatus.approved:
+          return const CustomChip.approved();
+        default:
+          return const CustomChip.pending();
+      }
+    } else {
+      //final userName = ref.read(homeViewVMProvider.notifier).getUserById(timeoffRequest.userId);
+      return CustomChip.user(
+        text: FirebaseAuth.instance.currentUser!.displayName!,
+      );
+    }
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
+  Future<dynamic> requestModalBottomSheet(
+      BuildContext context, WidgetRef ref, UserModel user) {
+    return showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(8),
+        ),
+      ),
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: user.userType == UserType.employee
+            ? MediaQuery.of(context).size.height * .6
+            : MediaQuery.of(context).size.height * .7,
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.background,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(8),
+            ),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    height: 4,
+                    width: 36,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(2),
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                left: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Talep Detayları',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onBackground,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                top: 50,
+                left: 0,
+                right: 0,
+                
+                bottom: timeoffRequest.timeOffStatus == TimeOffStatus.rejected
+                    ? 0
+                    // TODO: change this 50 for manager userType
+                    : 50,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatusColumn(
+                            context,
+                            timeoffRequest.timeOffStatus,
+                          ),
+                          _modalSheetContentRow(
+                            title: 'İzin Türü',
+                            value: timeoffRequest.timeOffType.name,
+                          ),
+                          _modalSheetContentRow(
+                            title: 'İzne Çıkış',
+                            value: ref
+                                .read(dateTimeFormatterProvider)
+                                .formatDateTimewithDots(
+                                    DateTime.parse(timeoffRequest.startDate))
+                                .toString()
+                                .split(' ')[0],
+                          ),
+                          _modalSheetContentRow(
+                            title: 'İşe Başlama',
+                            value: ref
+                                .read(dateTimeFormatterProvider)
+                                .formatDateTimewithDots(
+                                    DateTime.parse(timeoffRequest.endDate).add(
+                                  const Duration(days: 1),
+                                ))
+                                .toString()
+                                .split(' ')[0],
+                          ),
+                          _modalSheetContentRow(
+                            title: 'İzinli Gün Toplamı',
+                            value: ref
+                                .read(dateTimeFormatterProvider)
+                                .calculateWorkDays(
+                                    DateTime.parse(timeoffRequest.startDate),
+                                    DateTime.parse(timeoffRequest.endDate))
+                                .toString(),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                alignment: Alignment.centerLeft,
+                                child: const Text('Açıklama'),
+                              ),
+                              Text(
+                                timeoffRequest.reason ?? '',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              timeoffRequest.timeOffStatus == TimeOffStatus.rejected
+                  ? const SizedBox()
+                  : Positioned(
+                      bottom: 0,
+                      right: 0,
+                      left: 0,
+                      child: Container(
+                        color: Colors.white,
+                        child: Column(
+                          children: [
+                            //CustomButton(onPressed: () {}, title: 'Kabul Et'),
+                            CustomButton.cancelStyle(
+                              onPressed: () {
+                                showCancelConfirmationDialog(context, ref);
+                              },
+                              title: 'Talebi İptal Et',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<Object?> showCancelConfirmationDialog(
+      BuildContext context, WidgetRef ref) {
+    return showGeneralDialog(
+      context: context,
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return AlertDialog(
+          title: const Text('Talebi İptal Et'),
+          content: const Text('Talebi iptal etmek istediğinize emin misiniz?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('İptal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                ref
+                    .read(homeViewVMProvider.notifier)
+                    .cancelTimeOffRequest(timeoffRequest.id!)
+                    .then((value) {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                });
+              },
+              child: const Text('Evet'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Container _modalSheetContentRow(
+      {required String title, required String value}) {
+    return Container(
       height: 24,
-      child: Chip(
-        label: Text('Bekliyor'),
-        labelStyle: TextStyle(color: Color(0xff026AA2)),
-        backgroundColor: Color(0xffF0F9FF),
-        padding: EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
-}
 
-class ApprovedChip extends StatelessWidget {
-  const ApprovedChip({
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      height: 24,
-      child: Chip(
-        label: Text('Onaylandı'),
-        labelStyle: TextStyle(color: Color(0xff027A48)),
-        backgroundColor: Color(0xffECFDF3),
-        padding: EdgeInsets.only(bottom: 8),
-      ),
-    );
-  }
-}
-
-class RejectedChip extends StatelessWidget {
-  const RejectedChip({
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      height: 24,
-      child: Chip(
-        label: Text('Reddedildi'),
-        labelStyle: TextStyle(color: Color(0xffC01048)),
-        backgroundColor: Color(0xffFFF1F3),
-        padding: EdgeInsets.only(bottom: 8),
-      ),
-    );
+  Widget _buildStatusColumn(BuildContext context, TimeOffStatus status) {
+    switch (status) {
+      case TimeOffStatus.pending:
+        return const SizedBox(
+          height: 40,
+        );
+      case TimeOffStatus.approved:
+        return SizedBox(
+          height: 140,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: const [
+              SizedBox.square(
+                dimension: 64,
+                child: RiveAnimation.asset('assets/rive/success.riv'),
+              ),
+              Text(
+                'Talep Onaylandı',
+                style:
+                    TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        );
+      case TimeOffStatus.rejected:
+        return SizedBox(
+          height: 140,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: const [
+              SizedBox.square(
+                dimension: 72,
+                child: RiveAnimation.asset(
+                  'assets/rive/error.riv',
+                  animations: [],
+                ),
+              ),
+              Text(
+                'Talebin Onaylanmadı',
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        );
+      default:
+        return const SizedBox(
+          height: 40,
+        );
+    }
   }
 }
