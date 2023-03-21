@@ -20,7 +20,7 @@ class AppTheme {
           onError: Colors.white,
           background: const Color(0xffF6F6F6),
           onBackground: const Color(0xff344054),
-          surface: Colors.lightBlue,
+          surface: const Color(0xff667085),
           onSurface: Colors.grey.shade800,
         ),
         appBarTheme: const AppBarTheme(

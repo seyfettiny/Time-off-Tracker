@@ -1,12 +1,12 @@
 name: timeofftracker
 description: A new Flutter project.
 
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=2.19.4 <3.0.0'
+  sdk: ">=2.19.4 <3.0.0"
 
 dependencies:
   flutter:
@@ -23,6 +23,7 @@ dependencies:
 
   # Immutable data classes generator
   freezed_annotation: ^2.2.0
+  json_annotation: ^4.8.0
 
   # Google Sign-In SDK
   google_sign_in: ^6.0.2
@@ -33,17 +34,20 @@ dependencies:
   # Splash screen
   flutter_native_splash: ^2.2.19
 
-  # Google Fonts
-  google_fonts: ^4.0.3
-
   # Form Validation
   validators: ^3.0.0
 
-  # Animations
+  # UI
   flutter_staggered_animations: ^1.1.1
-
-  # Toasts
+  dotted_border: ^2.0.0+3
+  google_fonts: ^4.0.3
   overlay_support: ^2.1.0
+  rive: 0.9.1
+
+  # Localization
+  intl: ^0.17.0
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
@@ -52,18 +56,14 @@ dev_dependencies:
   # Lints for code quality analysis
   flutter_lints: ^2.0.0
   riverpod_lint: ^1.1.6
+  custom_lint: ^0.3.2
 
   # Code generation
   build_runner: ^2.3.3
   riverpod_generator: ^2.1.4
   freezed: ^2.3.2
+  json_serializable: ^6.6.1
   source_gen: ^1.1.0
-
-  # Internationalization
-  intl: ^0.17.0
-  flutter_localizations:
-    sdk: flutter
-
 
 flutter:
   uses-material-design: true
@@ -71,7 +71,8 @@ flutter:
 
   assets:
     - assets/images/
-    
+    - assets/rive/
+
 flutter_native_splash:
   color: "#F6F6F6"
   image: assets/images/logo_icon.png

@@ -8,8 +8,6 @@ class SplashView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      child: Text(routeName),
-    );
+    return const Text(routeName);
   }
 }

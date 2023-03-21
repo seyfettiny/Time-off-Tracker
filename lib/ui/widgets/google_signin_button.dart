@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class GoogleSignInWidget extends StatelessWidget {
   final String title;
-  final onPressed;
+  final VoidCallback onPressed;
   const GoogleSignInWidget({
     super.key,
     required this.title,
