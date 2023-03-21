@@ -6,9 +6,11 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:timeofftracker/app/enums/user_type.dart';
 import 'package:timeofftracker/app/extensions/toast_ext.dart';
 
 import 'package:timeofftracker/services/auth_service.dart';
+import 'package:timeofftracker/services/firestore_service.dart';
 import 'package:timeofftracker/ui/view/error_view.dart';
 import 'package:timeofftracker/ui/view/login_view.dart';
 import 'package:timeofftracker/ui/view/timeoff_request_view.dart';
@@ -16,14 +18,17 @@ import 'package:timeofftracker/ui/widgets/timeoff_request_section.dart';
 import 'package:timeofftracker/ui/widgets/timeoff_request_tile.dart';
 import 'package:timeofftracker/viewmodel/homeview_viewmodel.dart';
 
-class HomeView extends HookConsumerWidget {
-  HomeView({super.key});
+class HomeView extends ConsumerWidget {
+  const HomeView({super.key});
 
   static const routeName = '/homeView';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final timeOffRequestListAsyncValue = ref.watch(timeOffRequestListProvider);
+    final timeOffRequestListAsyncValue =
+        ref.watch(timeOffRequestListByCurrentUserProvider);
+    final currentUserAsyncValue = ref.watch(currentUserProvider);
+
     return Scaffold(
       appBar: AppBar(
         leading: Image.asset(
@@ -52,9 +57,8 @@ class HomeView extends HookConsumerWidget {
       body: timeOffRequestListAsyncValue.when(
         skipError: true,
         error: (error, stackTrace) {
-          // error.toString().showErrorToast();
           debugPrint(error.toString() + stackTrace.toString());
-          // return const ErrorView();
+          return const ErrorView();
         },
         loading: () {
           return const Center(
@@ -62,10 +66,16 @@ class HomeView extends HookConsumerWidget {
           );
         },
         data: (data) {
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: AnimationLimiter(
+          return RefreshIndicator(
+            onRefresh: () {
+              return Future.wait([
+                ref.refresh(currentUserProvider.future),
+                ref.refresh(timeOffRequestListByCurrentUserProvider.future)
+              ]);
+            },
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
                 child: Column(
                   children: AnimationConfiguration.toStaggeredList(
                     childAnimationBuilder: (widget) => SlideAnimation(
@@ -76,6 +86,7 @@ class HomeView extends HookConsumerWidget {
                     ),
                     children: [
                       TimeOffRequestSection(data: data),
+
                       Container(
                         padding: const EdgeInsets.only(top: 24.0),
                         alignment: Alignment.centerLeft,
@@ -88,6 +99,7 @@ class HomeView extends HookConsumerWidget {
                           ),
                         ),
                       ),
+                      
                       Container(
                         margin: const EdgeInsets.symmetric(vertical: 16),
                         child: GestureDetector(
@@ -118,20 +130,31 @@ class HomeView extends HookConsumerWidget {
                           ),
                         ),
                       ),
-                      SizedBox(
-                        height: data.length * 108,
-                        child: ListView.builder(
-                          itemCount: data.length,
-                          physics: const ClampingScrollPhysics(),
-                          itemBuilder: (context, index) {
-                            data.sort((a, b) =>
-                                b.requestedAt.compareTo(a.requestedAt));
-                            return TimeOffRequestTile(
-                              timeoffRequest: data[index],
+                      currentUserAsyncValue.when(
+                          data: (user) {
+                            return SizedBox(
+                              height: data.length * 108,
+                              child: ListView.builder(
+                                itemCount: data.length,
+                                physics: const ClampingScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  data.sort((a, b) =>
+                                      b.requestedAt.compareTo(a.requestedAt));
+                                  return TimeOffRequestTile(
+                                    timeoffRequest: data[index],
+                                    user: user,
+                                  );
+                                },
+                              ),
                             );
                           },
-                        ),
-                      ),
+                          error: ((error, stackTrace) => const ErrorView()),
+                          loading: () {
+                            //TODO: Skeleton loading of items
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          })
                     ],
                   ),
                 ),
