@@ -8,6 +8,7 @@ part '../app/generated/timeoff_request_model.g.dart';
 @freezed
 class TimeOffRequestModel with _$TimeOffRequestModel {
   const factory TimeOffRequestModel({
+    String? id,
     required String startDate,
     required String endDate,
     required String requestedAt,
