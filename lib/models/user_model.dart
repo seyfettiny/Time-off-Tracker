@@ -10,6 +10,7 @@ class UserModel with _$UserModel {
   const factory UserModel({
     required UserType userType,
     @Default(24) int timeOffBalance,
+    required String fullName,
     List<TimeOffRequestModel>? timeOffRequestList,
     String? photoURL,
   }) = _User;

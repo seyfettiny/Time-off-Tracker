@@ -29,6 +29,7 @@ class AuthService {
         email: email,
         password: password,
       );
+
       return userCredential.user;
     } on FirebaseAuthException catch (error, stackTrace) {
       // TODO: Handle error message translation
@@ -56,10 +57,11 @@ class AuthService {
       final firestoreService = _ref.read(firestoreServiceProvider);
 
       //TODO: How to decide if the user is manager or not?
-      firestoreService.createUser(const UserModel(
+      firestoreService.createUser(UserModel(
+        fullName: name,
         userType: UserType.employee,
         timeOffBalance: 24,
-        timeOffRequestList: [], 
+        timeOffRequestList: [],
       ));
 
       return result;

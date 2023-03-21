@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:timeofftracker/app/enums/user_type.dart';
 import 'package:timeofftracker/models/timeoff_request_model.dart';
 import 'package:timeofftracker/models/user_model.dart';
 
@@ -20,6 +19,7 @@ class FireStoreService {
     await _usersCollectionReference
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .set({
+      'fullName': userModel.fullName,
       'userType': userModel.userType.name.toString(),
       'timeOffBalance': userModel.timeOffBalance,
       'timeOffRequests': userModel.timeOffRequestList,
@@ -30,6 +30,11 @@ class FireStoreService {
     return await _usersCollectionReference.doc(uid).get();
   }
 
+  Future<List<QueryDocumentSnapshot>> getAllUsers() async {
+    final querySnapshot = await _usersCollectionReference.get();
+    return querySnapshot.docs;
+  }
+
   Future<void> updateTimeOffBalance(int timeOffBalance) async {
     await _usersCollectionReference
         .doc(FirebaseAuth.instance.currentUser!.uid)
@@ -38,7 +43,7 @@ class FireStoreService {
 
   Future<void> createTimeOffRequest(
       TimeOffRequestModel timeOffRequestModel) async {
-    await _timeOffCollectionReference.add({
+    final doc = await _timeOffCollectionReference.add({
       'startDate': timeOffRequestModel.startDate,
       'endDate': timeOffRequestModel.endDate,
       'requestedAt': timeOffRequestModel.requestedAt,
@@ -47,11 +52,8 @@ class FireStoreService {
       'timeOffStatus': timeOffRequestModel.timeOffStatus.name,
       'timeOffType': timeOffRequestModel.timeOffType.name,
     });
-    //TODO: fix this
-    await _usersCollectionReference
-        .doc(FirebaseAuth.instance.currentUser!.uid)
-        .update({
-      'timeOffRequests': timeOffRequestModel,
+    await _usersCollectionReference.doc(timeOffRequestModel.userId).update({
+      'timeOffRequests': FieldValue.arrayUnion([doc.id]),
     });
   }
 
@@ -71,5 +73,9 @@ class FireStoreService {
     await _timeOffCollectionReference
         .doc(requestId)
         .update({'timeOffStatus': newStatus});
+  }
+
+  Future<void> cancelTimeOffRequest(String requestId) async {
+    await _timeOffCollectionReference.doc(requestId).delete();
   }
 }
