@@ -20,9 +20,11 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const OverlaySupport.global(
-    child: ProviderScope(
-      child: App(),
+  runApp(
+    const ProviderScope(
+      child: OverlaySupport.global(
+        child: App(),
+      ),
     ),
-  ));
+  );
 }

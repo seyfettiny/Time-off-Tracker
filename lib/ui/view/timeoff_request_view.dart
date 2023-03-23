@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:timeofftracker/app/enums/timeoff_status.dart';
 import 'package:timeofftracker/app/enums/timeoff_type.dart';
+import 'package:timeofftracker/app/extensions/toast_ext.dart';
 import 'package:timeofftracker/app/util/date_time_formatter.dart';
 import 'package:timeofftracker/models/timeoff_request_model.dart';
 import 'package:timeofftracker/ui/view/result_view.dart';
@@ -76,7 +77,8 @@ class TimeOffRequestView extends HookConsumerWidget {
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 14.0),
+                                    horizontal: 14.0,
+                                  ),
                                   margin: const EdgeInsets.only(top: 8.0),
                                   height: 44,
                                   alignment: Alignment.centerLeft,
@@ -87,7 +89,16 @@ class TimeOffRequestView extends HookConsumerWidget {
                                       color: const Color(0xffD0D5DD),
                                     ),
                                   ),
-                                  child: Text(dropdownSelectedValue.value.name),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    mainAxisSize: MainAxisSize.max,
+                                    children: [
+                                      Text(dropdownSelectedValue.value.name),
+                                      const Icon(
+                                          Icons.keyboard_arrow_down_sharp)
+                                    ],
+                                  ),
                                 ),
                               ),
                               Container(
@@ -219,24 +230,31 @@ class TimeOffRequestView extends HookConsumerWidget {
                         ),
                         CustomButton(
                           onPressed: () {
-                            //TODO: convert this to the form validation
-                            assert(startDateValue.value
-                                .isBefore(endDateValue.value));
-                            timeoffRequestVM
-                                .createTimeOffRequest(
-                              TimeOffRequestModel(
-                                startDate: startDateValue.value.toString(),
-                                endDate: endDateValue.value.toString(),
-                                requestedAt: DateTime.now().toString(),
-                                userId: FirebaseAuth.instance.currentUser!.uid,
-                                timeOffType: dropdownSelectedValue.value,
-                                timeOffStatus: TimeOffStatus.pending,
-                                reason: reasonTextFieldController.text,
-                              ),
-                            )
-                                .then((value) {
-                              context.go(ResultView.routeName);
-                            });
+                            if (startDateValue.value
+                                .isAfter(endDateValue.value)) {
+                              //TODO: localize this
+                              "Başlangıç tarihi bitiş tarihinden önce olamaz"
+                                  .showErrorToast();
+                              return;
+                            } else {
+                              //TODO: do not allow to send request if user has overlapping requests
+                              timeoffRequestVM
+                                  .createTimeOffRequest(
+                                TimeOffRequestModel(
+                                  startDate: startDateValue.value.toString(),
+                                  endDate: endDateValue.value.toString(),
+                                  requestedAt: DateTime.now().toString(),
+                                  userId:
+                                      FirebaseAuth.instance.currentUser!.uid,
+                                  timeOffType: dropdownSelectedValue.value,
+                                  timeOffStatus: TimeOffStatus.pending,
+                                  reason: reasonTextFieldController.text,
+                                ),
+                              )
+                                  .then((value) {
+                                context.go(ResultView.routeName);
+                              });
+                            }
                           },
                           title: 'Talep Gönder',
                         ),
