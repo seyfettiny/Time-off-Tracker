@@ -22,8 +22,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: SplashView.routeName,
         builder: (context, state) => const SplashView(),
         redirect: (context, state) {
-          final user = FirebaseAuth.instance.currentUser;
-          if (user != null) {
+          if (FirebaseAuth.instance.currentUser != null) {
             return HomeView.routeName;
           } else {
             return LoginView.routeName;

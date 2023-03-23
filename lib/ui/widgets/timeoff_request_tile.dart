@@ -1,25 +1,23 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:rive/rive.dart';
 import 'package:timeofftracker/app/enums/timeoff_status.dart';
 import 'package:timeofftracker/app/enums/user_type.dart';
 import 'package:timeofftracker/app/util/date_time_formatter.dart';
 import 'package:timeofftracker/models/timeoff_request_model.dart';
 import 'package:timeofftracker/models/user_model.dart';
-import 'package:timeofftracker/services/firestore_service.dart';
-import 'package:timeofftracker/ui/view/error_view.dart';
 import 'package:timeofftracker/ui/widgets/custom_chip.dart';
 import 'package:timeofftracker/ui/widgets/custom_button.dart';
 import 'package:timeofftracker/viewmodel/homeview_viewmodel.dart';
 
 class TimeOffRequestTile extends ConsumerWidget {
-  final UserModel user;
   final TimeOffRequestModel timeoffRequest;
+  final UserModel userItem;
+  final UserType currentUserType;
   const TimeOffRequestTile({
-    required this.user,
+    required this.userItem,
     required this.timeoffRequest,
+    required this.currentUserType,
     super.key,
   });
 
@@ -28,7 +26,7 @@ class TimeOffRequestTile extends ConsumerWidget {
     final dateTimeFormatter = ref.read(dateTimeFormatterProvider);
     return GestureDetector(
       onTap: () {
-        requestModalBottomSheet(context, ref, user);
+        requestModalBottomSheet(context, ref, currentUserType);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -75,16 +73,15 @@ class TimeOffRequestTile extends ConsumerWidget {
                 color: Theme.of(context).colorScheme.surface,
               ),
             ),
-            _buildChipType(ref, timeoffRequest.timeOffStatus, user),
+            _buildChipType(ref, timeoffRequest.timeOffStatus),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildChipType(
-      WidgetRef ref, TimeOffStatus timeOffStatus, UserModel user) {
-    if (user.userType == UserType.employee) {
+  Widget _buildChipType(WidgetRef ref, TimeOffStatus timeOffStatus) {
+    if (currentUserType == UserType.employee) {
       switch (timeOffStatus) {
         case TimeOffStatus.pending:
           return const CustomChip.pending();
@@ -96,15 +93,15 @@ class TimeOffRequestTile extends ConsumerWidget {
           return const CustomChip.pending();
       }
     } else {
-      //final userName = ref.read(homeViewVMProvider.notifier).getUserById(timeoffRequest.userId);
       return CustomChip.user(
-        text: FirebaseAuth.instance.currentUser!.displayName!,
+        text: userItem.fullName,
+        timeOffStatus: timeOffStatus,
       );
     }
   }
 
   Future<dynamic> requestModalBottomSheet(
-      BuildContext context, WidgetRef ref, UserModel user) {
+      BuildContext context, WidgetRef ref, UserType userType) {
     return showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -114,9 +111,9 @@ class TimeOffRequestTile extends ConsumerWidget {
       ),
       isScrollControlled: true,
       constraints: BoxConstraints(
-        maxHeight: user.userType == UserType.employee
+        maxHeight: userType == UserType.employee
             ? MediaQuery.of(context).size.height * .6
-            : MediaQuery.of(context).size.height * .7,
+            : MediaQuery.of(context).size.height * .8,
       ),
       builder: (context) {
         return Container(
@@ -174,11 +171,11 @@ class TimeOffRequestTile extends ConsumerWidget {
                 top: 50,
                 left: 0,
                 right: 0,
-                
                 bottom: timeoffRequest.timeOffStatus == TimeOffStatus.rejected
                     ? 0
-                    // TODO: change this 50 for manager userType
-                    : 50,
+                    : currentUserType == UserType.employee
+                        ? 50
+                        : 100,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -256,12 +253,30 @@ class TimeOffRequestTile extends ConsumerWidget {
                         color: Colors.white,
                         child: Column(
                           children: [
-                            //CustomButton(onPressed: () {}, title: 'Kabul Et'),
+                            if (currentUserType == UserType.manager &&
+                                timeoffRequest.timeOffStatus ==
+                                    TimeOffStatus.pending)
+                              CustomButton(
+                                  onPressed: () {
+                                    ref
+                                        .read(homeViewVMProvider.notifier)
+                                        .approveTimeOffRequest(
+                                          timeoffRequest.id!,
+                                          timeoffRequest.userId,
+                                        )
+                                        .then((value) {
+                                      //Navigator.pop(context);
+                                      Navigator.pop(context);
+                                    });
+                                  },
+                                  title: 'Kabul Et'),
                             CustomButton.cancelStyle(
                               onPressed: () {
                                 showCancelConfirmationDialog(context, ref);
                               },
-                              title: 'Talebi İptal Et',
+                              title: currentUserType == UserType.employee
+                                  ? 'Talebi İptal Et'
+                                  : 'Reddet',
                             ),
                           ],
                         ),
@@ -276,35 +291,56 @@ class TimeOffRequestTile extends ConsumerWidget {
 
   Future<Object?> showCancelConfirmationDialog(
       BuildContext context, WidgetRef ref) {
-    return showGeneralDialog(
-      context: context,
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return AlertDialog(
-          title: const Text('Talebi İptal Et'),
-          content: const Text('Talebi iptal etmek istediğinize emin misiniz?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('İptal'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                ref
-                    .read(homeViewVMProvider.notifier)
-                    .cancelTimeOffRequest(timeoffRequest.id!)
-                    .then((value) {
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                });
-              },
-              child: const Text('Evet'),
-            ),
-          ],
-        );
-      },
-    );
+    // Check if the request is older than 3 hours so it can't be cancelled
+    return DateTime.parse(timeoffRequest.startDate)
+            .isBefore(DateTime.now().subtract(const Duration(hours: 3)))
+        ? showGeneralDialog(
+            context: context,
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return AlertDialog(
+                title: const Text('Talebi İptal Et'),
+                content: const Text('Geçmiş tarihli talepler iptal edilemez.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Tamam'),
+                  ),
+                ],
+              );
+            },
+          )
+        : showGeneralDialog(
+            context: context,
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return AlertDialog(
+                title: const Text('Talebi İptal Et'),
+                content:
+                    const Text('Talebi iptal etmek istediğinize emin misiniz?'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('İptal'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      ref
+                          .read(homeViewVMProvider.notifier)
+                          .cancelTimeOffRequest(timeoffRequest.id!)
+                          .then((value) {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      });
+                    },
+                    child: const Text('Evet'),
+                  ),
+                ],
+              );
+            },
+          );
   }
 
   Container _modalSheetContentRow(
@@ -331,9 +367,25 @@ class TimeOffRequestTile extends ConsumerWidget {
   Widget _buildStatusColumn(BuildContext context, TimeOffStatus status) {
     switch (status) {
       case TimeOffStatus.pending:
-        return const SizedBox(
-          height: 40,
-        );
+        return currentUserType == UserType.manager
+            ? SizedBox(
+                height: 160,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Image.asset('assets/images/profile_picture.png'),
+                    Text(
+                      userItem.fullName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  ],
+                ),
+              )
+            : const SizedBox(
+                height: 40,
+              );
       case TimeOffStatus.approved:
         return SizedBox(
           height: 140,
@@ -357,8 +409,8 @@ class TimeOffRequestTile extends ConsumerWidget {
           height: 140,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: const [
-              SizedBox.square(
+            children: [
+              const SizedBox.square(
                 dimension: 72,
                 child: RiveAnimation.asset(
                   'assets/rive/error.riv',
@@ -366,9 +418,13 @@ class TimeOffRequestTile extends ConsumerWidget {
                 ),
               ),
               Text(
-                'Talebin Onaylanmadı',
-                style:
-                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                currentUserType == UserType.employee
+                    ? 'Talebin Onaylanmadı'
+                    : 'Talep Reddedildi',
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),

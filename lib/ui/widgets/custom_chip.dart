@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:timeofftracker/app/enums/timeoff_status.dart';
 
 class CustomChip extends StatelessWidget {
   static const Color approvedTextColor = Color(0xff027A48);
@@ -11,25 +12,40 @@ class CustomChip extends StatelessWidget {
   final String text;
   final Color textColor;
   final Color backgroundColor;
-
-  const CustomChip.user({super.key, required this.text})
-      : textColor = pendingTextColor,
-        backgroundColor = pendingBackgroundColor;
+  final TimeOffStatus timeOffStatus;
 
   const CustomChip.pending({super.key})
       : text = 'Pending',
         textColor = pendingTextColor,
-        backgroundColor = pendingBackgroundColor;
+        backgroundColor = pendingBackgroundColor,
+        timeOffStatus = TimeOffStatus.pending;
 
   const CustomChip.approved({super.key})
       : text = 'Approved',
         textColor = approvedTextColor,
-        backgroundColor = approvedBackgroundColor;
+        backgroundColor = approvedBackgroundColor,
+        timeOffStatus = TimeOffStatus.approved;
 
   const CustomChip.rejected({super.key})
       : text = 'Rejected',
         textColor = rejectedTextColor,
-        backgroundColor = rejectedBackgroundColor;
+        backgroundColor = rejectedBackgroundColor,
+        timeOffStatus = TimeOffStatus.rejected;
+
+  const CustomChip.user({
+    super.key,
+    required this.text,
+    required this.timeOffStatus,
+  })  : textColor = timeOffStatus == TimeOffStatus.pending
+            ? pendingTextColor
+            : timeOffStatus == TimeOffStatus.approved
+                ? approvedTextColor
+                : rejectedTextColor,
+        backgroundColor = timeOffStatus == TimeOffStatus.pending
+            ? pendingBackgroundColor
+            : timeOffStatus == TimeOffStatus.approved
+                ? approvedBackgroundColor
+                : rejectedBackgroundColor;
 
   @override
   Widget build(BuildContext context) {
