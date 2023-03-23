@@ -22,7 +22,7 @@ class FireStoreService {
       'fullName': userModel.fullName,
       'userType': userModel.userType.name.toString(),
       'timeOffBalance': userModel.timeOffBalance,
-      'timeOffRequests': userModel.timeOffRequestList,
+      'timeOffRequests': userModel.timeOffRequests,
     });
   }
 
@@ -43,6 +43,7 @@ class FireStoreService {
 
   Future<void> createTimeOffRequest(
       TimeOffRequestModel timeOffRequestModel) async {
+    //TODO: Throw exception if timeOffBalance is less than timeOffRequest
     final doc = await _timeOffCollectionReference.add({
       'startDate': timeOffRequestModel.startDate,
       'endDate': timeOffRequestModel.endDate,
@@ -57,8 +58,14 @@ class FireStoreService {
     });
   }
 
-  Future<List<QueryDocumentSnapshot>> getAllTimeOffRequests() async {
-    final querySnapshot = await _timeOffCollectionReference.get();
+  Stream<QuerySnapshot> getAllTimeOffRequests() {
+    final querySnapshot = _timeOffCollectionReference.snapshots();
+    return querySnapshot;
+  }
+
+  Future<List<QueryDocumentSnapshot>> getUsersWithTimeOffRequests() async {
+    final querySnapshot = await _usersCollectionReference
+        .where('timeOffRequests', isNotEqualTo: []).get();
     return querySnapshot.docs;
   }
 
@@ -76,6 +83,32 @@ class FireStoreService {
   }
 
   Future<void> cancelTimeOffRequest(String requestId) async {
+    //TODO: Add logic to add back time off days to user's balance
+    //TODO: Check if request startDate is in the past
     await _timeOffCollectionReference.doc(requestId).delete();
+    await _usersCollectionReference
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .update({
+      'timeOffRequests': FieldValue.arrayRemove([requestId])
+    });
+  }
+
+  Future<void> approveTimeOffRequest(String requestId, String userId) async {
+    final timeOffRequest =
+        (await _timeOffCollectionReference.doc(requestId).get()).data()
+            as Map<String, dynamic>;
+
+    if (timeOffRequest['timeOffType'] == 'annual') {
+      //TODO: Throw exception if timeOffBalance is less than timeOffRequest
+      await _usersCollectionReference.doc(userId).update({
+        'timeOffBalance': FieldValue.increment(
+            -DateTime.parse(timeOffRequest['endDate'])
+                .difference(DateTime.parse(timeOffRequest['startDate']))
+                .inDays),
+      });
+    }
+    await _timeOffCollectionReference
+        .doc(requestId)
+        .update({'timeOffStatus': 'Approved'});
   }
 }

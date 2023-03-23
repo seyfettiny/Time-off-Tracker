@@ -11,22 +11,43 @@ final homeViewVMProvider =
 });
 
 final timeOffRequestListByCurrentUserProvider =
-    StreamProvider<List<TimeOffRequestModel>>((ref) async* {
+    StreamProvider.autoDispose<List<TimeOffRequestModel>>((ref) async* {
   final vmRef = ref.watch(homeViewVMProvider.notifier);
-
-  await for (final timeOffRequestList in vmRef.getTimeOffRequestsById()) {
-    yield timeOffRequestList;
+  if (FirebaseAuth.instance.currentUser != null) {
+    await for (final timeOffRequestList in vmRef
+        .getTimeOffRequestsById(FirebaseAuth.instance.currentUser!.uid)) {
+      yield timeOffRequestList;
+    }
   }
 });
 
 final allTimeOffRequestListProvider =
-    FutureProvider<List<TimeOffRequestModel>>((ref) async {
+    StreamProvider.autoDispose<List<TimeOffRequestModel>>((ref) async* {
   final vmRef = ref.watch(homeViewVMProvider.notifier);
-  final timeOffRequestList = await vmRef.getAllTimeOffRequests();
-  return timeOffRequestList;
+  if (FirebaseAuth.instance.currentUser != null) {
+    await for (final timeOffRequestList in vmRef.getAllTimeOffRequests()) {
+      yield timeOffRequestList;
+    }
+  }
 });
 
-final currentUserProvider = FutureProvider<UserModel>((ref) async {
+final userByIdProvider =
+    FutureProvider.family<UserModel, String>((ref, id) async {
+  final vmRef = ref.watch(homeViewVMProvider.notifier);
+  final user = await vmRef.getUserById(id);
+  return UserModel.fromJson(user.data() as Map<String, dynamic>);
+});
+
+final userListWithTimeoffRequestsProvider =
+    FutureProvider.autoDispose<List<UserModel>>((ref) async {
+  final vmRef = ref.watch(homeViewVMProvider.notifier);
+  final users = await vmRef.getUsersWithTimeOffRequests();
+  return users
+      .map((e) => UserModel.fromJson(e.data() as Map<String, dynamic>))
+      .toList();
+});
+
+final currentUserProvider = FutureProvider.autoDispose<UserModel>((ref) async {
   final vmRef = ref.watch(homeViewVMProvider.notifier);
   final user = await vmRef.getUserById(FirebaseAuth.instance.currentUser!.uid);
   return UserModel.fromJson(user.data() as Map<String, dynamic>);
@@ -45,10 +66,13 @@ class HomeViewVM extends StateNotifier<List<TimeOffRequestModel>> {
 
   HomeViewVM(this._ref) : super([]);
 
-  Future<List<TimeOffRequestModel>> getAllTimeOffRequests() async {
+  Stream<List<TimeOffRequestModel>> getAllTimeOffRequests() async* {
     final fireStoreService = _ref.read(firestoreServiceProvider);
-    final querySnapshot = await fireStoreService.getAllTimeOffRequests();
-    return state = querySnapshot.map(parseResult).toList();
+    final stream = fireStoreService.getAllTimeOffRequests();
+    
+    yield* stream.map((snapshot) {
+      return state = snapshot.docs.map(parseResult).toList();
+    });
   }
 
   Future<List<QueryDocumentSnapshot>> getAllUsers() async {
@@ -57,14 +81,24 @@ class HomeViewVM extends StateNotifier<List<TimeOffRequestModel>> {
     return querySnapshot;
   }
 
-  Stream<List<TimeOffRequestModel>> getTimeOffRequestsById() async* {
+  Future<List<QueryDocumentSnapshot>> getUsersWithTimeOffRequests() async {
     final fireStoreService = _ref.read(firestoreServiceProvider);
-    final stream = fireStoreService
-        .getTimeOffRequestsByUserId(FirebaseAuth.instance.currentUser!.uid);
+    final querySnapshot = await fireStoreService.getUsersWithTimeOffRequests();
+    return querySnapshot;
+  }
+
+  Stream<List<TimeOffRequestModel>> getTimeOffRequestsById(String id) async* {
+    final fireStoreService = _ref.read(firestoreServiceProvider);
+    final stream = fireStoreService.getTimeOffRequestsByUserId(id);
 
     yield* stream.map((snapshot) {
       return state = snapshot.docs.map(parseResult).toList();
     });
+  }
+
+  Future<void> approveTimeOffRequest(String requestId,String userId) async {
+    final fireStoreService = _ref.read(firestoreServiceProvider);
+    await fireStoreService.approveTimeOffRequest(requestId,userId);
   }
 
   Future<void> cancelTimeOffRequest(String id) async {
