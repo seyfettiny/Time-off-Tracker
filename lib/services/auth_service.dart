@@ -61,7 +61,7 @@ class AuthService {
         fullName: name,
         userType: UserType.employee,
         timeOffBalance: 24,
-        timeOffRequestList: [],
+        timeOffRequests: [],
       ));
 
       return result;
