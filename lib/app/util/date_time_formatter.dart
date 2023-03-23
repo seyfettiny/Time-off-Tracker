@@ -37,7 +37,7 @@ class DateTimeFormatter {
       }
       date = date.add(const Duration(days: 1));
     }
-
+    
     return workDays;
   }
 
